@@ -1,0 +1,81 @@
+# This Praat script takes a folder of sound et textgrid files and for each
+# file, creates a new TextGrid tier. It then opens each TextGrid along with its
+# accompanying sound file, and guide you to every /R/ phonems sothat you can perform the 
+# annotations. Press "OK" in the pop-up window to proceed to next /R/ and save the TextGrid.
+#
+# Melanie lancien, SLI Unil, january 2021 
+# Inspired by a script from Scott Seyfarth https://gist.github.com/scjs/ffbbba71cc8b3ff9d0476c82b2df9d0f
+#
+
+
+form Settings
+    word Interval_tiers R
+    sentence Point_tiers 
+    word Sound_file_extension .wav
+    sentence directory C:\Users\33665\Desktop\try_anno_auto
+    
+
+endform
+
+
+@getFiles: directory$, sound_file_extension$
+
+
+
+for i to getFiles.length
+    soundfile = Read from file: getFiles.files$ [i]
+
+    @getTextGrid: getFiles.files$ [i]
+
+  	selectObject: getTextGrid.textgrid
+	Insert interval tier: 7, interval_tiers$
+	
+			
+
+        selectObject: soundfile, getTextGrid.textgrid
+        View & Edit
+	selectObject: getTextGrid.textgrid
+	nbInt= Get number of intervals: 5
+		for i to nbInt 
+		label$=Get label of interval: 5,i
+			if label$ = "ʁ"
+			start= Get start point: 5, i 
+			end= Get end point: 5, i 
+			editor = getTextGrid.textgrid
+			editor : editor
+			Select: start, end
+			Zoom to selection
+			endeditor
+	
+       	 		beginPause: "Annotation"
+         		comment: "Press OK when done to save and proceed."
+        		endPause: "OK", 0
+			else 
+			i=i+1
+               		endif
+
+		selectObject: getTextGrid.textgrid
+		Save as text file: getTextGrid.path$
+		endfor
+       
+    	removeObject: getTextGrid.textgrid
+    	removeObject: soundfile
+endfor
+
+procedure getTextGrid: .soundfile$
+    .path$ = replace$: .soundfile$, sound_file_extension$, ".TextGrid", 0
+
+    .textgrid = Read from file: .path$
+endproc
+
+procedure getFiles: .dir$, .ext$
+    .obj = Create Strings as file list: "files", .dir$ + "/*" + .ext$
+    .length = Get number of strings
+
+    for .i to .length
+        .fname$ = Get string: .i
+        .files$ [.i] = .dir$ + "/" + .fname$
+	
+    endfor
+    removeObject: .obj
+endproc

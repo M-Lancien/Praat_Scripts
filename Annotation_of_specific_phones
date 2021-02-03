@@ -18,6 +18,8 @@ form Settings
 endform
 
 
+
+
 @getFiles: directory$, sound_file_extension$
 
 
@@ -29,7 +31,7 @@ for i to getFiles.length
 
   	selectObject: getTextGrid.textgrid
 	Insert interval tier: 7, interval_tiers$
-	
+	appendInfoLine: "Processing file ", getFiles.files$ [i], "..."
 			
 
         selectObject: soundfile, getTextGrid.textgrid
@@ -37,8 +39,10 @@ for i to getFiles.length
 	selectObject: getTextGrid.textgrid
 	nbInt= Get number of intervals: 5
 		for i to nbInt 
+		#appendInfoLine: "int", i, "over",nbInt
 		label$=Get label of interval: 5,i
-			if label$ = "ʁ"
+		match = index_regex ( label$, ".*ʁ.*\s.*" )
+			if label$ = "ʁ"  
 			start= Get start point: 5, i 
 			end= Get end point: 5, i 
 			editor = getTextGrid.textgrid
@@ -51,7 +55,7 @@ for i to getFiles.length
          		comment: "Press OK when done to save and proceed."
         		endPause: "OK", 0
 			else 
-			i=i+1
+			i+1
                		endif
 
 		selectObject: getTextGrid.textgrid
@@ -69,13 +73,13 @@ procedure getTextGrid: .soundfile$
 endproc
 
 procedure getFiles: .dir$, .ext$
-    .obj = Create Strings as file list: "files", .dir$ + "/*" + .ext$
-    .length = Get number of strings
+	.obj = Create Strings as file list: "files", .dir$ + "/*" + .ext$
+	.length = Get number of strings
 
-    for .i to .length
-        .fname$ = Get string: .i
-        .files$ [.i] = .dir$ + "/" + .fname$
+	for .i to .length
+     .fname$ = Get string: .i
+     .files$ [.i] = .dir$ + "/" + .fname$
 	
-    endfor
-    removeObject: .obj
+	endfor
+	removeObject: .obj
 endproc

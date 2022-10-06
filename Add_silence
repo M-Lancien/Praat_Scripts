@@ -1,4 +1,4 @@
-#praat script: modified version of a script from  Daniel Hirst 
+#praat script: modified version of a script by Daniel Hirst "anonymise_long_sounds.praat"
 # melanie lancien 09/2022
 
 # replace portions of a long sound which are labelled on the TextGrid

@@ -1,15 +1,9 @@
-#praat script: anonymise_long_sound.praat
+#praat script: modified version of a script from  Daniel Hirst
+# melanie lancien 09/2022
 
-#version: [2008:05:25]
-
-#author: Daniel Hirst
-#email: daniel.hirst@lpl-aix.fr
-
-#purpose: replace portions of a long sound which are labelled with a key word on the accompanying TextGrid
-#		with a hum sound with the same prosodic characteristics as the original sound
-
-#requires: the script should be in the same folder as the Long_Sounds to be anonymised
-#		each sound should be accompanied by a TextGrid with the same name
+# replace portions of a long sound which are labelled on the TextGrid
+# with a silence  
+# each sound should be accompanied by a TextGrid with the same name
 
 form anonymise_long_sound
 	word sound_extension .wav

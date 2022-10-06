@@ -5,166 +5,92 @@
 # with a silence  
 # each sound should be accompanied by a TextGrid with the same name
 
+
+
 form anonymise_long_sound
-	word sound_extension .wav
-	word textGrid_extension .textGrid
-	word anonymised_extension _anon.wav
+	word directory_name C:\Users\33665\Desktop
+	word extension _treated.wav
 	natural target_tier 1
-	word target_label buzz
-	comment duration of section for analysis (in secs)
-	positive section 30
-	positive timestep 0.01
-	boolean automatic_max_and_min yes 
-	natural minimum_f0 60
-	natural maximum_f0 700
-	comment use this to lower overall intensity if necessary
-	positive scale_intensity 0.9
+	sentence Word_one le
+	sentence Word_two la
+	sentence Word_three un
+	sentence Word_four l
+	sentence Word_five des
 endform
 
 clearinfo
 
-mySounds = Create Strings as file list... sounds *'sound_extension$'
-nSounds = Get number of strings
+## Create a list of textgrids to process
+Create Strings as file list... list 'directory_name$'/*.TextGrid
+num = Get number of strings
+appendInfoLine: num
 
-for iSound to nSounds
-	select mySounds
-	sound$ = Get string... iSound
+## Loop every textgrid in list
+for ifile to num
+	## Loop every interval on reference tier
+	select Strings list
+	fileName$ = Get string: ifile
+	appendInfoLine: fileName$
+	current = Read from file... 'directory_name$'/'fileName$'
+	ninterv = Get number of intervals: target_tier
+	appendInfoLine: ninterv 
+	for i from 1 to ninterv
+	#selectObject: current
+	label$ = Get label of interval: target_tier, i
+	appendInfoLine: label$
+		if label$ = word_one$ or label$=word_two$ or label$=word_three$ or label$=word_four$ or label$=word_five$
+		appendInfoLine: label$
 
-	if not endsWith(sound$, anonymised_extension$)
-		name$ = sound$ - sound_extension$
-		textGrid$ = name$ + textGrid_extension$
-		anonymised_sound$ = name$ + anonymised_extension$
+		start_time = Get start point: target_tier, i
+		end_time = Get end point: target_tier, i
+		duration_of_silence = end_time-start_time
+		appendInfoLine: duration_of_silence 
 
-		if not fileReadable(textGrid$)
-			printline Can't find TextGrid file for 'name$'
+		snd$ = fileName$ - ".TextGrid" + ".wav"
+		#appendInfoLine: snd$
+
+		current_snd = Open long sound file: "'directory_name$'/'snd$'"
+		current_snd_total_duration = Get total duration
+		#appendInfoLine: current_snd_total_duration 
+
+		selectObject: current_snd
+		sampling_frequency = Get sampling frequency
+   		duration = Get total duration
+		appendInfoLine: duration 
+ 		
+		silence = Create Sound from formula: "Silence", 1, 0, duration_of_silence, 44100, "0"
+   	
+ 		select current_snd
+  		end = Extract part: end_time, duration, "yes"
+
+
+   		select silence
+   		plus end
+  		myNewSound = Concatenate
+  		
+
+   		x$=fileName$+extension$
+		appendInfoLine: x$
+   		select myNewSound
+	
+  	 # change the following line if the directory changes
+
+		Save as WAV file: "'directory_name$'/'x$'"
+
+
+
 		else
-			call treat_sound
+		#appendInfoLine: "shit"
 		endif
-	endif
+
+#i+1
+
+	endfor
 endfor
 
-select mySounds
-Remove
+removeObject: current_snd
+removeObject: current
 
 
 
-procedure treat_sound
-	mySound = Open long sound file... 'sound$'
-	sound_duration = Get total duration
-	myTextGrid = Read from file... 'textGrid$'
-	select mySound
-	part_end = 0
-	part = 0
 
-	repeat
-		part = part+1
-		part_start = part_end
-		part_end = part_end + section
-	
-		if part_end > sound_duration
-			part_end = sound_duration
-		endif
-
-		select mySound
-		call treat_part
-	until part_end = sound_duration
-
-	myNew_sound = Open long sound file... 'anonymised_sound$'
-	pause - Click to continue
-	select mySound
-	plus myNew_sound
-	plus myTextGrid
-	Remove
-endproc
-
-procedure treat_part
-	mySound_part_temp = Extract part... part_start part_end no
-	mySound_part = Convert to mono
-	intensity = Get intensity (dB)
-	scaled_intensity = intensity * scale_intensity
-	Scale intensity... scaled_intensity
-
-
-	select myTextGrid
-	myTextGrid_part = Extract part... part_start part_end no
-
-	nIntervals = Get number of intervals... target_tier
-
-	for iInterval to nIntervals
-		select myTextGrid_part
-		label$ = Get label of interval... target_tier iInterval
-		if label$ = target_label$
-			call treat_word
-		endif
-	endfor
-
-	select mySound_part
-
-	if part = 1
-		Write to WAV file... 'anonymised_sound$'
-	else
-		Append to existing sound file... 'anonymised_sound$'
-	endif
-	plus mySound_part_temp
-	plus myTextGrid_part
-	Remove
-endproc
-
-procedure treat_word
-	if automatic_max_and_min
-		select mySound_part
-		call calculate_min_max_f0
-	else
-		min_f0 = minimum_f0
-		max_f0 = maximum_f0
-	endif
-
-	select myTextGrid_part
-	word_start = Get starting point... target_tier iInterval
-	word_end = Get end point... target_tier iInterval
-	word_duration = word_end - word_start
-	select mySound_part
-	myLeft = Extract part... 0 word_start rectangular 1 no
-	select mySound_part
-	myWord = Extract part... word_start word_end rectangular 1 no
-	myScale = Get intensity (dB)
-	myPitch = To Pitch... timestep min_f0 max_f0
-	myHum = To Sound (hum)
-	select myWord
-	myIntensity = To Intensity... min_f0 timestep no
-	myIntensityTier = Down to IntensityTier
-	plus myHum
-	myNewHum = Multiply... yes
-	Scale intensity... myScale
-	select mySound_part
-!pause 'word_end' 'section'
-	myRight = Extract part... word_end section rectangular 1 no
-	select myLeft
-	plus myNewHum
-	plus myRight
-	myNew_part = Concatenate
-	select mySound_part
-	plus myLeft
-	plus myWord
-	plus myPitch
-	plus myHum
-	plus myIntensity
-	plus myIntensityTier
-	plus myNewHum
-	plus myRight
-	Remove
-	mySound_part = myNew_part
-	printline ['part_start'..'part_end'] treating word 'target_label$' in interval 'iInterval'
-endproc
-
-procedure calculate_min_max_f0
-#  estimate of newMaxF0 as 1.5 * quantile 75
-#  and newMinF0 as 0.5 * quantile 25
-#  rounded to higher (resp. lower) 10
-	To Pitch... 'timestep' 'minimum_f0' 'maximum_f0'
-	.q75 = Get quantile... 0.0 0.0 0.75 Hertz
-	.q25 = Get quantile... 0.0 0.0 0.25 Hertz
-	max_f0 = 10*ceiling((1.5*.q75)/10)
-	min_f0 = 10*floor((0.75*.q25)/10)
-	Remove
-endproc

@@ -1,7 +1,7 @@
 #praat script: modified version of a script by Daniel Hirst "anonymise_long_sounds.praat"
 # melanie lancien 09/2022
 
-# replace portions of a long sound which are labelled on the TextGrid
+# replace portions of a long sound which are labelled on the TextGrid (here DET part of speech)
 # with a silence  
 # each sound should be accompanied by a TextGrid with the same name
 
